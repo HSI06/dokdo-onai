@@ -8,13 +8,14 @@ def load_rag():
     return content
 
 def search_docs(content, query):
-    paragraphs = [p.strip() for p in content.split("\n") if len(p.strip()) > 20]
-    query_words = query.lower().split()
+    paragraphs = [p.strip() for p in content.split("\n") if len(p.strip()) > 10]
+    query_words = set(query.lower().replace("?", "").replace("!", "").split())
     scored = []
     for p in paragraphs:
-        score = sum(1 for w in query_words if w in p.lower())
+        p_lower = p.lower()
+        score = sum(1 for w in query_words if w in p_lower)
         if score > 0:
             scored.append((score, p))
     scored.sort(reverse=True)
-    top = [p for _, p in scored[:5]]
-    return "\n".join(top) if top else ""
+    top = [p for _, p in scored[:8]]
+    return "\n".join(top) if top else content[:500]
