@@ -106,11 +106,8 @@ def get_caption(island, season):
     else:
         return "동도 정상에서 바라본 서도" if is_korean else "Seodo viewed from Dongdo"
 
-season_label = {"봄": "봄", "여름": "여름", "가을": "가을", "겨울": "겨울",
-                "Spring": "Spring", "Summer": "Summer", "Autumn": "Autumn", "Winter": "Winter"}
-
 if os.path.exists(img_path):
-    st.image(img_path, caption=f"{get_caption(island, season)} ({season_label[season]})", use_container_width=True)
+    st.image(img_path, caption=f"{get_caption(island, season)} ({season})", use_container_width=True)
 else:
     st.warning("해당 사진이 없습니다." if is_korean else "Photo not available.")
 

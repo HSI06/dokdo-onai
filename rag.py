@@ -1,24 +1,20 @@
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
 import os
 
 def load_rag():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     doc_path = os.path.join(base_dir, "docs", "dokdo_all.txt")
-    
-    loader = TextLoader(doc_path, encoding="utf-8")
-    docs = loader.load()
-    
-    splitter = RecursiveCharacterTextSplitter(chunk_size=150, chunk_overlap=20)
-    splits = splitter.split_documents(docs)
-    
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-    
-    vectorstore = Chroma.from_documents(splits, embeddings, persist_directory=os.path.join(base_dir, "chroma_db"))
-    return vectorstore.as_retriever(search_kwargs={"k": 5})
+    with open(doc_path, encoding="utf-8") as f:
+        content = f.read()
+    return content
 
-def search_docs(retriever, query):
-    results = retriever.invoke(query)
-    return "\n".join([doc.page_content for doc in results])
+def search_docs(content, query):
+    paragraphs = [p.strip() for p in content.split("\n") if len(p.strip()) > 20]
+    query_words = query.lower().split()
+    scored = []
+    for p in paragraphs:
+        score = sum(1 for w in query_words if w in p.lower())
+        if score > 0:
+            scored.append((score, p))
+    scored.sort(reverse=True)
+    top = [p for _, p in scored[:5]]
+    return "\n".join(top) if top else ""
