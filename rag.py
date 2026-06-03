@@ -4,7 +4,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
 def load_rag():
-    loader = TextLoader("docs\\dokdo_all.txt", encoding="utf-8")
+    loader = TextLoader("docs/dokdo_all.txt", encoding="utf-8")
     docs = loader.load()
     
     splitter = RecursiveCharacterTextSplitter(chunk_size=150, chunk_overlap=20)
