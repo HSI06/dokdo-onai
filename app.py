@@ -99,7 +99,6 @@ st.markdown("""
     margin-top: 1rem;
 }
 
-/* 탭 스타일 */
 .stTabs [data-baseweb="tab-list"] {
     background: #fff !important;
     border-bottom: 2px solid #e0e3e8 !important;
@@ -123,6 +122,16 @@ st.markdown("""
     background: #f4f6f8 !important;
 }
 
+.stButton > button {
+    background: #fff !important; color: #555 !important;
+    border: 0.5px solid #e0e3e8 !important; border-radius: 20px !important;
+    padding: 4px 8px !important; font-family: 'Noto Sans KR' !important;
+    font-size: 12px !important;
+}
+.stButton > button:hover {
+    background: #fdecea !important; color: #cd2e3a !important;
+    border-color: #f5b8b8 !important;
+}
 .stChatInput > div { border-radius: 24px !important; border-color: #e0e3e8 !important; }
 .stRadio label { font-family: 'Noto Sans KR' !important; font-size: 13px !important; }
 [data-testid="stSidebar"] { display: none !important; }
@@ -130,15 +139,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===================== 상단바 =====================
-if os.path.exists("logo_korean.png"):
-    logo_b64 = load_image_b64("logo_korean.png")
-    logo_tag = f'<img src="data:image/png;base64,{logo_b64}" style="height:44px;" />'
-else:
-    logo_tag = '<div class="logo-text">독도 <span>ON-AI</span></div>'
-
-st.markdown(f"""
+st.markdown("""
 <div class="topbar">
-    {logo_tag}
+    <div class="logo-text">독도 <span>ON-AI</span></div>
     <div class="topnav">
         <a>역사·영유권</a>
         <a>자연·생태</a>
@@ -200,6 +203,12 @@ def get_weather():
     except:
         return None
 
+# ===================== session state 초기화 =====================
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "example_prompt" not in st.session_state:
+    st.session_state.example_prompt = ""
+
 # ===================== 탭 구조 =====================
 tab1, tab2, tab3, tab4 = st.tabs(["🤖 AI 챗봇", "🌤️ 날씨", "🗺️ 지도", "📸 계절별 사진"])
 
@@ -210,19 +219,50 @@ with tab1:
 
     if is_korean:
         placeholder = "독도에 대해 무엇이든 물어보세요!"
-        system_prompt = "당신은 독도 전문 AI 가이드입니다. 독도의 역사, 자연환경, 생태계, 지리적 특성, 날씨, 기후에 대해 정확하고 친절하게 안내해주세요. 반드시 한국어로만 답변하세요. 한국어 외의 다른 언어 문자(한자, 중국어, 일본어 등)를 절대 섞지 마세요. 숫자 범위를 표현할 때는 반드시 '~' 하나만 사용하세요. 독도와 관련없는 질문이나 대화를 하면 '저는 독도 전문 AI 가이드입니다. 독도와 관련된 질문만 답변드릴 수 있어요 😊 독도의 역사, 자연환경, 관광 정보 등 궁금한 점을 물어보세요!' 라고 답변하세요."
+        system_prompt = "당신은 독도 전문 AI 가이드입니다. 독도의 역사, 자연환경, 생태계, 지리적 특성, 날씨, 기후에 대해 정확하고 친절하게 안내해주세요. 반드시 한국어로만 답변하세요. 한국어 외의 다른 언어 문자(한자, 중국어, 일본어, 영어 단어 등)를 절대 섞지 마세요. 오직 한글과 숫자, 기호만 사용하세요. 숫자 범위를 표현할 때는 반드시 '~' 하나만 사용하세요. 독도와 관련없는 질문이나 대화를 하면 '저는 독도 전문 AI 가이드입니다. 독도와 관련된 질문만 답변드릴 수 있어요 😊 독도의 역사, 자연환경, 관광 정보 등 궁금한 점을 물어보세요!' 라고 답변하세요."
     else:
         placeholder = "Ask me anything about Dokdo!"
         system_prompt = "You are an AI guide specializing in Dokdo Island. Please provide accurate and friendly information about Dokdo's history, natural environment, ecosystem, geographical features, weather, and climate. Always respond in English only. When expressing number ranges, always use only one tilde (~). If the user asks questions unrelated to Dokdo, respond with: 'I am a Dokdo specialist AI guide. I can only answer questions related to Dokdo 😊 Please ask about Dokdo's history, natural environment, tourism information, etc.'"
 
     llm = ChatGroq(api_key=os.getenv("GROQ_API_KEY"), model="llama-3.3-70b-versatile")
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # 예시 질문 버튼
+    st.markdown("**💬 예시 질문**")
+    questions = [
+        "독도는 왜 우리 땅인가요?",
+        "독도에 사는 동물은?",
+        "독도 가는 방법 알려줘",
+        "독도 면적이 얼마야?",
+        "독도 날씨는 어때?",
+        "메탄하이드레이트가 뭐야?"
+    ]
+    cols = st.columns(len(questions), gap="small")
+    for i, q in enumerate(questions):
+        with cols[i]:
+            if st.button(q, key=f"q{i}"):
+                st.session_state.example_prompt = q
+                st.rerun()
 
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
+
+    # 예시 질문 처리
+    if st.session_state.example_prompt:
+        prompt = st.session_state.example_prompt
+        st.session_state.example_prompt = ""
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.write(prompt)
+        context = search_docs(retriever, prompt)
+        response = llm.invoke([
+            SystemMessage(content=f"{system_prompt}\n\n참고 문서:\n{context}"),
+            HumanMessage(content=prompt)
+        ])
+        with st.chat_message("assistant"):
+            st.write(response.content.replace("~~", "~"))
+        st.session_state.messages.append({"role": "assistant", "content": response.content})
+        st.rerun()
 
     if prompt := st.chat_input(placeholder):
         st.session_state.messages.append({"role": "user", "content": prompt})
