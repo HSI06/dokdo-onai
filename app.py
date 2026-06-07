@@ -364,7 +364,7 @@ with tab4:
 # 푸터
 st.markdown(f"""
 <div class="footer">
-    <div>독도 ON-AI · 한신대학교 캡스톤 2025 · 황사익</div>
+    <div>독도 ON-AI · IT스마트관광플랫폼 · 황사익</div>
     <div>🇰🇷 {"대한민국의 섬, 독도" if is_korean else "Dokdo, Beautiful Island of Korea"}</div>
 </div>
 """, unsafe_allow_html=True)
